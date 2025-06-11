@@ -19,6 +19,7 @@ namespace UIChess {
 		{
 			InitializeComponent();
 			CreateButtons();
+			chessSprites = gcnew Bitmap("Z:\\pp\UI\\UIChess\\UI\\UIChess\\chess.png");		// Я не понимаю...литералы какие то 
 			//
 			//TODO: добавьте код конструктора
 			//
@@ -44,8 +45,33 @@ namespace UIChess {
 		/// </summary>
 		System::ComponentModel::Container ^components;
 
+	private:
+		// модель доски: код = десятки (сторона), единицы (тип фигуры)
+		cli::array<int, 2>^ map;
+		// картинка со всеми спрайтами
+		Bitmap^ chessSprites;
+		void InitMap()
+		{
+			static int initial[8][8] = {
+				{15,14,13,12,11,13,14,15}, // 1x - Черные, 2x - Белые
+				{16,16,16,16,16,16,16,16},
+				{ 0, 0, 0, 0, 0, 0, 0, 0},
+				{ 0, 0, 0, 0, 0, 0, 0, 0},
+				{ 0, 0, 0, 0, 0, 0, 0, 0},
+				{ 0, 0, 0, 0, 0, 0, 0, 0},
+				{26,26,26,26,26,26,26,26},
+				{25,24,23,22,21,23,24,25}
+			};
+			map = gcnew cli::array<int, 2>(8, 8);
+			for (int i = 0; i < 8; i++)
+				for (int j = 0; j < 8; j++)
+					map[i, j] = initial[i][j];
+		}
+
+
+	
 	/*-------------------------------------------
-			Создаем массив из 64 кнопок
+		 Создаем массив из 64 кнопок
 	-------------------------------------------*/
 	private: 
 		cli::array<Button^, 2>^ buttons;
@@ -61,12 +87,32 @@ namespace UIChess {
 					btn->Size = Drawing::Size(50, 50); // Размер кнопки Size 
 					btn->Location = Drawing::Point(col * 50, row * 50); //
 					btn->Name = String::Format(L"button_{0}_{1}", row, col); // Уникальное имя для каждой кнопки, по строке и столбцу
-					btn->Text = ""; //
-					this->Controls->Add(btn);
-					buttons[row, col] = btn;
+					btn->Text = ""; // Пока что пустой текст
+					this->Controls->Add(btn); 
+					buttons[row, col] = btn; // Ссылка на кнопку для дальнейшей логики
+
+					int code = map[row, col];
+					if (code != 0)
+					{
+						int side = code / 10;         // 1 = белые сверху, 2 = чёрные снизу
+						int piece = code % 10;        // 1=король,2=ферзь,3=слон,5=ладья,6=пешка,4=конь
+						Bitmap^ bmp = gcnew Bitmap(50, 50);
+						Graphics^ g = Graphics::FromImage(bmp);
+						int srcX = 150 * (piece - 1);
+						int srcY = (side == 1) ? 0 : 150;
+						g->DrawImage(chessSprites,
+							System::Drawing::Rectangle(0, 0, 50, 50),
+							srcX, srcY, 150, 150,
+							GraphicsUnit::Pixel);
+						btn->BackgroundImage = bmp;
+						btn->BackgroundImageLayout = ImageLayout::Stretch;
+					}
+
 				}
 			}
-		};
+		}
+
+
 
 
 
