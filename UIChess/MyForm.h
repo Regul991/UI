@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 
 namespace UIChess {
 
@@ -10,7 +10,7 @@ namespace UIChess {
 	using namespace System::Drawing;
 
 	/// <summary>
-	/// Сводка для MyForm
+	/// РЎРІРѕРґРєР° РґР»СЏ MyForm
 	/// </summary>
 	public ref class MyForm : public System::Windows::Forms::Form
 	{
@@ -20,13 +20,13 @@ namespace UIChess {
 			InitializeComponent();
 			CreateButtons();
 			//
-			//TODO: добавьте код конструктора
+			//TODO: РґРѕР±Р°РІСЊС‚Рµ РєРѕРґ РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂР°
 			//
 		}
 
 	protected:
 		/// <summary>
-		/// Освободить все используемые ресурсы.
+		/// РћСЃРІРѕР±РѕРґРёС‚СЊ РІСЃРµ РёСЃРїРѕР»СЊР·СѓРµРјС‹Рµ СЂРµСЃСѓСЂСЃС‹.
 		/// </summary>
 		~MyForm()
 		{
@@ -40,12 +40,12 @@ namespace UIChess {
 
 	private:
 		/// <summary>
-		/// Обязательная переменная конструктора.
+		/// РћР±СЏР·Р°С‚РµР»СЊРЅР°СЏ РїРµСЂРµРјРµРЅРЅР°СЏ РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂР°.
 		/// </summary>
 		System::ComponentModel::Container ^components;
 
 	/*-------------------------------------------
-			Создаем массив из 64 кнопок
+			РЎРѕР·РґР°РµРј РјР°СЃСЃРёРІ РёР· 64 РєРЅРѕРїРѕРє
 	-------------------------------------------*/
 	private: 
 		cli::array<Button^, 2>^ buttons;
@@ -53,14 +53,14 @@ namespace UIChess {
 		{
 			buttons = gcnew cli::array<Button^, 2>(8, 8);
 
-			for (int row = 0; row < 8; row++) // 8 строк
+			for (int row = 0; row < 8; row++) // 8 СЃС‚СЂРѕРє
 			{
-				for (int col = 0; col < 8; col++) // 8 столбцов 
+				for (int col = 0; col < 8; col++) // 8 СЃС‚РѕР»Р±С†РѕРІ 
 				{
-					Button^ btn = gcnew Button(); // Функция добавления нового управляемого объедка gcnew
-					btn->Size = Drawing::Size(50, 50); // Размер кнопки Size 
+					Button^ btn = gcnew Button(); // Р¤СѓРЅРєС†РёСЏ РґРѕР±Р°РІР»РµРЅРёСЏ РЅРѕРІРѕРіРѕ СѓРїСЂР°РІР»СЏРµРјРѕРіРѕ РѕР±СЉРµРґРєР° gcnew
+					btn->Size = Drawing::Size(50, 50); // Р Р°Р·РјРµСЂ РєРЅРѕРїРєРё Size 
 					btn->Location = Drawing::Point(col * 50, row * 50); //
-					btn->Name = String::Format(L"button_{0}_{1}", row, col); // Уникальное имя для каждой кнопки, по строке и столбцу
+					btn->Name = String::Format(L"button_{0}_{1}", row, col); // РЈРЅРёРєР°Р»СЊРЅРѕРµ РёРјСЏ РґР»СЏ РєР°Р¶РґРѕР№ РєРЅРѕРїРєРё, РїРѕ СЃС‚СЂРѕРєРµ Рё СЃС‚РѕР»Р±С†Сѓ
 					btn->Text = ""; //
 					this->Controls->Add(btn);
 					buttons[row, col] = btn;
@@ -73,8 +73,8 @@ namespace UIChess {
 
 #pragma region Windows Form Designer generated code
 		/// <summary>
-		/// Требуемый метод для поддержки конструктора — не изменяйте 
-		/// содержимое этого метода с помощью редактора кода.
+		/// РўСЂРµР±СѓРµРјС‹Р№ РјРµС‚РѕРґ РґР»СЏ РїРѕРґРґРµСЂР¶РєРё РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂР° вЂ” РЅРµ РёР·РјРµРЅСЏР№С‚Рµ 
+		/// СЃРѕРґРµСЂР¶РёРјРѕРµ СЌС‚РѕРіРѕ РјРµС‚РѕРґР° СЃ РїРѕРјРѕС‰СЊСЋ СЂРµРґР°РєС‚РѕСЂР° РєРѕРґР°.
 		/// </summary>
 		void InitializeComponent(void)
 		{
