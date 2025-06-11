@@ -36,3 +36,4 @@
 *.suo
 bin/
 obj/
+x64/
