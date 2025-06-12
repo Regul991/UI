@@ -40,8 +40,15 @@ namespace UIChess {
 			}
 		}
 
+	
 	protected:
 
+
+	/*----Переменнные для хранения----*/
+	private:
+		int selectedRow = -1;
+		int selectedCol = -1;
+	
 	private:
 		/// <summary>
 		/// Обязательная переменная конструктора.
@@ -72,9 +79,9 @@ namespace UIChess {
 		}
 
 
-	
+	public: bool isMoving = false;
 	/*-------------------------------------------
-		 Создаем массив из 64 кнопок
+		 Создаем массив-доску из 64 кнопок
 	-------------------------------------------*/
 	private: 
 		cli::array<Button^, 2>^ buttons;
@@ -110,11 +117,78 @@ namespace UIChess {
 						btn->BackgroundImage = bmp; // Устанавливаем как фон
 						btn->BackgroundImageLayout = ImageLayout::Stretch; // Меняем tile на stretch чтобы изображение не повторялось внутри кнопки
 					}
+					btn->Click += gcnew System::EventHandler(this, &MyForm::OnCellClick);
 
 				}
 			}
 		}
 
+		/*------ КЛИКИ ИВЕНТЫ -------*/
+	private: System::Void OnCellClick(System::Object^ sender, System::EventArgs^ e) { // Обработчик клика по ячейке шахматной доски
+		Button^ btn = (Button^)sender; // Получаем кнопку, по которой был клик
+		// Парсим имя, чтобы узнать координаты
+		int row, col;
+		String^ name = btn->Name; // "button_{row}_{col}" например button_2_3
+		array<String^>^ parts = name->Split('_'); 
+		row = Int32::Parse(parts[1]); // Конвертируем вторую часть в число — номер строки //Преобразует строковое представление числа в эквивалентное ему 32-битовое целое число со знаком.
+		col = Int32::Parse(parts[2]); // Третью - номер столбцы
+
+		// Если ничего не выбрано
+		if (selectedRow == -1 && selectedCol == -1) {
+			if (map[row, col] != 0) { // Проверяем, есть ли фигура в этой клетке
+				// Клик по своей фигуре - берем ее в руку
+				selectedRow = row;
+				selectedCol = col;
+				buttons[row, col]->FlatStyle = FlatStyle::Flat; // Меняем стиль кнопки
+				buttons[row, col]->FlatAppearance->BorderColor = Color::Red; // Красная рамка
+				buttons[row, col]->FlatAppearance->BorderSize = 2; // Размер выделения границы?? хз как описать 
+			}
+		}
+		else {
+			// Пытаемся походить (пока что без легальности)
+			map[row, col] = map[selectedRow, selectedCol]; // Перемещаем код фигуры в новую клетку
+			map[selectedRow, selectedCol] = 0; // Очищаем старую клетку
+			UpdateBoard(); // Обновляем доску она снизу
+			// Сброс выделения
+			buttons[selectedRow, selectedCol]->FlatStyle = FlatStyle::Standard;
+			selectedRow = -1;
+			selectedCol = -1;
+		}
+	}
+		   /*---------- Обновление ----------*/ /*Метод для перерисовки всех кнопок на доске по состоянию массива map*/
+		   void UpdateBoard()
+		   {
+			   for (int row = 0; row < 8; row++) // Проходим по всем строкам
+			   {
+				   for (int col = 0; col < 8; col++) // Проходим по всем столбцам
+				   {
+					   Button^ btn = buttons[row, col]; // Выбираем кнопку на позиции [row,col]
+					   int code = map[row, col]; // Ну тут в целом все как в Create Buttons
+					   btn->BackgroundImage = nullptr;
+					   if (code != 0)
+					   {
+						   int side = code / 10;
+						   int piece = code % 10;
+						   Bitmap^ bmp = gcnew Bitmap(50, 50);
+						   Graphics^ g = Graphics::FromImage(bmp);
+						   int srcX = 150 * (piece - 1);
+						   int srcY = (side == 1) ? 0 : 150;
+						   g->DrawImage(chessSprites,
+							   System::Drawing::Rectangle(0, 0, 50, 50),
+							   srcX, srcY, 150, 150,
+							   GraphicsUnit::Pixel);
+						   btn->BackgroundImage = bmp;
+						   btn->BackgroundImageLayout = ImageLayout::Stretch;
+					   }
+				   }
+			   }
+		   }
+		   /*------------------------------------------------
+		   * Почему нужен UpdateBoard() отдельно?           *
+		   * Потому что пересоздавать кнопки снова медленно *
+		   * Неудобно                                       *
+		   * И ненужно ведь сетка не меняется               *
+		   -------------------------------------------------*/
 
 
 
