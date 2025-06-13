@@ -48,6 +48,7 @@ namespace UIChess {
 	private:
 		int selectedRow = -1;
 		int selectedCol = -1;
+		bool whiteTurn = true;
 	
 	private:
 		/// <summary>
@@ -78,6 +79,9 @@ namespace UIChess {
 					map[i, j] = initial[i][j];
 		}
 
+	
+	private:
+		bool whiteTurn = true; // Флаг для очередности хода
 
 	public: bool isMoving = false;
 	/*-------------------------------------------
