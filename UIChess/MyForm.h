@@ -128,7 +128,7 @@ namespace UIChess {
 
 
 		/*-------------------------------
-		*   Проверки легальности ходов
+		*   Проверки легальности ходов 
 		--------------------------------*/
 		bool IsLegalPawnMove(int fromRow, int fromCol, int toRow, int toCol, int side) // ПЕШКИ
 		{
@@ -171,6 +171,28 @@ namespace UIChess {
 			}
 			return false;
 		}
+
+		bool IsLegalBishopMove(int fromRow, int fromCol, int toRow, int toCol, int side) // СЛОНЫ
+		{
+			int dr = toRow - fromRow;
+			int dc = toCol - fromCol;
+			if (System::Math::Abs(dr) != System::Math::Abs(dc) || dr == 0) // Диагональ |dr| = |dc| и ход не нулевой
+				return false;
+			int stepr = (dr > 0) ? 1 : -1; // Проверяем, что все клетки по маршруту пусты
+			int stepc = (dc > 0) ? 1 : -1;
+			int r = fromRow + stepr;
+			int c = fromCol + stepc;
+			while (r != toRow) {          // Цикл проверяет клетки по пути, кроме начальной и конечной
+				if (map[r, c] != 0)     // Если встретилась любая фигура — движение заблокировано
+					return false;
+				r += stepr;
+				c += stepc;
+			}
+
+			// Целевая клетка должна быть либо пустой, либо занятой вражеской фигурой
+			int dest = map[toRow, toCol];
+			return (dest == 0 || (dest / 10) != side);
+		}
 	
 		bool IsLegalRookMove(int fromRow, int fromCol, int toRow, int toCol, int side) // ЛАДЬИ
 		{
@@ -186,8 +208,8 @@ namespace UIChess {
 			while (r != toRow || c != toCol) { // Цикл проверяет клетки по пути, кроме начальной и конечной
 				if (map[r, c] != 0)  // Если встретилась любая фигура — движение заблокировано
 					return false;
-			r += dr; // Переход к некст клетке по направлению хода
-			c += dc;
+				r += dr; // Переход к некст клетке по направлению хода
+				c += dc;
 			}
 
 		// Целевая клетка должна быть либо пустой, либо занятой вражеской фигурой
@@ -196,6 +218,11 @@ namespace UIChess {
 			return true;
 
 		return false;
+		}
+
+		bool IsLegalQueenMove(int fromRow, int fromCol, int toRow, int toCol, int side) // ФЕРЗЬ
+		{
+			return IsLegalRookMove(fromRow, fromCol, toRow, toCol, side) || IsLegalBishopMove(fromRow, fromCol, toRow, toCol, side); // Объединяем ладью и ферзя
 		}
 
 
@@ -237,6 +264,12 @@ namespace UIChess {
 			}
 			else if (piece == 5) { // Если фигура ладья, то вызываем
 				legal = IsLegalRookMove(selectedRow, selectedCol, row, col, side);
+			}
+			else if (piece == 3) {                  // Если фигура слон, то вызываем
+				legal = IsLegalBishopMove(selectedRow, selectedCol, row, col, side);
+			}
+			else if (piece == 2) {                  // Если фигура ферзь, то вызываем
+				legal = IsLegalQueenMove(selectedRow, selectedCol, row, col, side);
 			}
 			// Сюда добавлю остальные IsLegalPieceTypeMove
 
