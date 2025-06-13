@@ -48,7 +48,7 @@ namespace UIChess {
 	private:
 		int selectedRow = -1;
 		int selectedCol = -1;
-		bool whiteTurn = true;
+		bool whiteTurn = true; // Флаг для очередности
 	
 	private:
 		/// <summary>
@@ -80,8 +80,7 @@ namespace UIChess {
 		}
 
 	
-	private:
-		bool whiteTurn = true; // Флаг для очередности хода
+
 
 	public: bool isMoving = false;
 	/*-------------------------------------------
@@ -127,9 +126,35 @@ namespace UIChess {
 			}
 		}
 
+		bool IsLegalPawnMove(int fromRow, int fromCol, int toRow, int toCol, int side)
+		{
+			int dir = (side == 1) ? -1 : 1; // Определям направление движения пешки у белых -1 у чёрных +1
+			int startRow = (side == 1) ? 6 : 1;  // Стартовая страка для пешек 6 у белых 1 у чёрных 
+
+			if (fromCol == toCol) // Просто ход вперед без взятия
+			{
+				// Обычный шаг на одну клетку если поле пустое
+				if (toRow == fromRow + dir && map[toRow, toCol] == 0) 
+					return true;
+				// Двойной шаг если обе клетки пусты
+				if (fromRow == startRow && toRow == fromRow + 2 * dir &&
+					map[fromRow + dir, fromCol] == 0 && map[toRow, toCol] == 0)
+					return true;
+			}
+			// Взятие по диагонали 
+			if (System::Math::Abs(toCol - fromCol) == 1 && toRow == fromRow + dir)
+			{
+				// Если стоит фигура по диагонали и пешка ходит по диагонали то это взятие
+				if (map[toRow, toCol] != 0 && (map[toRow, toCol] / 10) != side)
+					return true;
+			}
+			// В остальных случаях ход негелаен
+			return false;
+		}
+
 		/*------ КЛИКИ ИВЕНТЫ -------*/
 	private: System::Void OnCellClick(System::Object^ sender, System::EventArgs^ e) { // Обработчик клика по ячейке шахматной доски
-		Button^ btn = (Button^)sender; // Получаем кнопку, по которой был клик
+		Button^ btn = (Button^)sender; // Получаем кнопку, по которой был клик (приведение sender к типу button) 
 		// Парсим имя, чтобы узнать координаты
 		int row, col;
 		String^ name = btn->Name; // "button_{row}_{col}" например button_2_3
@@ -140,20 +165,35 @@ namespace UIChess {
 		// Если ничего не выбрано
 		if (selectedRow == -1 && selectedCol == -1) {
 			if (map[row, col] != 0) { // Проверяем, есть ли фигура в этой клетке
-				// Клик по своей фигуре - берем ее в руку
-				selectedRow = row;
-				selectedCol = col;
-				buttons[row, col]->FlatStyle = FlatStyle::Flat; // Меняем стиль кнопки
-				buttons[row, col]->FlatAppearance->BorderColor = Color::Red; // Красная рамка
-				buttons[row, col]->FlatAppearance->BorderSize = 2; // Размер выделения границы?? хз как описать 
+				int side = map[row, col] / 10;
+				if ((whiteTurn && side == 1) || (!whiteTurn && side == 2)) {
+					// Клик по своей фигуре - берем ее в руку
+					selectedRow = row;
+					selectedCol = col;
+					buttons[row, col]->FlatStyle = FlatStyle::Flat; // Меняем стиль кнопки
+					buttons[row, col]->FlatAppearance->BorderColor = Color::Red; // Красная рамка
+					buttons[row, col]->FlatAppearance->BorderSize = 2; // Размер выделения границы
+				}
 			}
 		}
-		else {
-			// Пытаемся походить (пока что без легальности)
-			map[row, col] = map[selectedRow, selectedCol]; // Перемещаем код фигуры в новую клетку
-			map[selectedRow, selectedCol] = 0; // Очищаем старую клетку
-			UpdateBoard(); // Обновляем доску она снизу
-			// Сброс выделения
+		else { // Tckb abuehf e;t ds,hfhfyf nj nj 'nj gjgsnrf cltkfnm [jl 
+			int code = map[selectedRow, selectedCol]; // Gjkexftv rjl ds,hfyyjq abuehs 
+			int side = code / 10; // Cnjhjyf 
+			int piece = code % 10; // Cnjk,tw 
+			bool legal = true; // Akfu ktufkmyjcnb 
+
+			if (piece == 6) { // Tckb gtirf ghjdthzv ktufkmyjcnb
+				legal = IsLegalPawnMove(selectedRow, selectedCol, row, col, side);
+				// Сюда добавлю остальные IsLegalPieceTypeMove
+			} 
+
+			if (legal && ((map[row, col] == 0) || (map[row, col] / 10) != side)) {
+				map[row, col] = code; // Перемещаем код фигуры в новую клетку
+				map[selectedRow, selectedCol] = 0; // Очищаем старую клетку
+				whiteTurn = !whiteTurn; // Меняем сторону 
+			}
+			// Сбрасываем выделение
+			UpdateBoard();
 			buttons[selectedRow, selectedCol]->FlatStyle = FlatStyle::Standard;
 			selectedRow = -1;
 			selectedCol = -1;
