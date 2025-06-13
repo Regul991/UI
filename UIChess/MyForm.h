@@ -171,6 +171,32 @@ namespace UIChess {
 			}
 			return false;
 		}
+	
+		bool IsLegalRookMove(int fromRow, int fromCol, int toRow, int toCol, int side) // ЛАДЬИ
+		{
+			// Ход должен быть ход строго по строке или по столбцу
+			if (fromRow != toRow && fromCol != toCol) // Движение по диагонали - возвращаем false 
+				return false;
+
+			// Проверяем, что между from и to все клетки пусты
+			int dr = (toRow > fromRow) ? 1 : (toRow < fromRow) ? -1 : 0; // движемся вниз dr → 1; вверх dr → -1; по горизонтали dr → 0, dc → +-1
+			int dc = (toCol > fromCol) ? 1 : (toCol < fromCol) ? -1 : 0;
+			int r = fromRow + dr;
+			int c = fromCol + dc;
+			while (r != toRow || c != toCol) { // Цикл проверяет клетки по пути, кроме начальной и конечной
+				if (map[r, c] != 0)  // Если встретилась любая фигура — движение заблокировано
+					return false;
+			r += dr; // Переход к некст клетке по направлению хода
+			c += dc;
+			}
+
+		// Целевая клетка должна быть либо пустой, либо занятой вражеской фигурой
+		int dest = map[toRow, toCol]; 
+		if (dest == 0 || (dest / 10) != side)
+			return true;
+
+		return false;
+		}
 
 
 		/*------ КЛИКИ ИВЕНТЫ -------*/
@@ -208,6 +234,9 @@ namespace UIChess {
 			} 
 			else if (piece == 4) { // Если фигура конь, то вызываем
 				legal = IsLegalKnightMove(selectedRow, selectedCol, row, col, side);
+			}
+			else if (piece == 5) { // Если фигура ладья, то вызываем
+				legal = IsLegalRookMove(selectedRow, selectedCol, row, col, side);
 			}
 			// Сюда добавлю остальные IsLegalPieceTypeMove
 
