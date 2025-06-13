@@ -176,16 +176,16 @@ namespace UIChess {
 				}
 			}
 		}
-		else { // Tckb abuehf e;t ds,hfhfyf nj nj 'nj gjgsnrf cltkfnm [jl 
-			int code = map[selectedRow, selectedCol]; // Gjkexftv rjl ds,hfyyjq abuehs 
-			int side = code / 10; // Cnjhjyf 
-			int piece = code % 10; // Cnjk,tw 
-			bool legal = true; // Akfu ktufkmyjcnb 
+		else { // Если уже выбрана фигура, то текущий клик — это попытка сделать ход
+			int code = map[selectedRow, selectedCol]; // Получаем код выбранной фигуры
+			int side = code / 10; // Сторона (1 или 2)
+			int piece = code % 10; // Тип фигуры 
+			bool legal = true; // Флаг легальности
 
-			if (piece == 6) { // Tckb gtirf ghjdthzv ktufkmyjcnb
+			if (piece == 6) { // Если фигура пешка то вызываем 
 				legal = IsLegalPawnMove(selectedRow, selectedCol, row, col, side);
-				// Сюда добавлю остальные IsLegalPieceTypeMove
 			} 
+			// Сюда добавлю остальные IsLegalPieceTypeMove
 
 			if (legal && ((map[row, col] == 0) || (map[row, col] / 10) != side)) {
 				map[row, col] = code; // Перемещаем код фигуры в новую клетку
@@ -233,8 +233,7 @@ namespace UIChess {
 		   * Неудобно                                       *
 		   * И ненужно ведь сетка не меняется               *
 		   -------------------------------------------------*/
-		   //111111111
-
+		 
 
 
 
