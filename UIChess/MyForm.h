@@ -126,10 +126,14 @@ namespace UIChess {
 			}
 		}
 
-		bool IsLegalPawnMove(int fromRow, int fromCol, int toRow, int toCol, int side)
+
+		/*-------------------------------
+		*   Проверки легальности ходов
+		--------------------------------*/
+		bool IsLegalPawnMove(int fromRow, int fromCol, int toRow, int toCol, int side) // ПЕШКИ
 		{
 			int dir = (side == 1) ? -1 : 1; // Определям направление движения пешки у белых -1 у чёрных +1
-			int startRow = (side == 1) ? 6 : 1;  // Стартовая страка для пешек 6 у белых 1 у чёрных 
+			int startRow = (side == 1) ? 6 : 1;  // Стартовая строка для пешек 6 у белых 1 у чёрных 
 
 			if (fromCol == toCol) // Просто ход вперед без взятия
 			{
@@ -151,6 +155,23 @@ namespace UIChess {
 			// В остальных случаях ход негелаен
 			return false;
 		}
+
+		bool IsLegalKnightMove(int fromRow, int fromCol, int toRow, int toCol, int side) // КОНИ
+		{
+			int dir = toRow - fromRow;
+			int dc = toCol - fromCol;
+			// Проверяем Г-образный ход: (2,1) или (1,2)
+			if ((System::Math::Abs(dir) == 2 && System::Math::Abs(dc) == 1) ||
+				(System::Math::Abs(dir) == 1 && System::Math::Abs(dc) == 2))
+			{
+				// Целевая клетка должна быть либо пустой, либо занятой вражеской фигурой
+				int dest = map[toRow, toCol];
+				if (dest == 0 || (dest / 10) != side)
+					return true;
+			}
+			return false;
+		}
+
 
 		/*------ КЛИКИ ИВЕНТЫ -------*/
 	private: System::Void OnCellClick(System::Object^ sender, System::EventArgs^ e) { // Обработчик клика по ячейке шахматной доски
@@ -182,9 +203,12 @@ namespace UIChess {
 			int piece = code % 10; // Тип фигуры 
 			bool legal = true; // Флаг легальности
 
-			if (piece == 6) { // Если фигура пешка то вызываем 
+			if (piece == 6) { // Если фигура пешка, то вызываем 
 				legal = IsLegalPawnMove(selectedRow, selectedCol, row, col, side);
 			} 
+			else if (piece == 4) { // Если фигура конь, то вызываем
+				legal = IsLegalKnightMove(selectedRow, selectedCol, row, col, side);
+			}
 			// Сюда добавлю остальные IsLegalPieceTypeMove
 
 			if (legal && ((map[row, col] == 0) || (map[row, col] / 10) != side)) {
