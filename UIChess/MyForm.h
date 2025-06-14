@@ -356,19 +356,22 @@ namespace UIChess {
 			// Сюда добавлю остальные IsLegalPieceTypeMove
 
 			if (legal && ((map[row, col] == 0) || (map[row, col] / 10) != side)) {
+				int captured = map[row, col]; // СОХРАНЯЕМ ЖЕРТВУ
 				map[row, col] = code; // Перемещаем код фигуры в новую клетку
 				map[selectedRow, selectedCol] = 0; // Очищаем старую клетку
-				whiteTurn = !whiteTurn; // Меняем сторону 
+
 				if (IsKingInCheck(side)) { // Проверка шаха для своей стороны
-					map[selectedRow, selectedCol] = code;
-					map[row, col] = 0;
-					whiteTurn = !whiteTurn;
+					map[selectedRow, selectedCol] = code; // Возвращаем короля 
+					map[row, col] = captured; // Возвращаем жертву
 					MessageBox::Show("Невозможный ход, шах.", "ошибка");
 				}
-				// Проверка шаха для противника
-				else if (IsKingInCheck(whiteTurn ? 2 : 1)) {
-					MessageBox::Show("Шах!", "ошибка3");
+				else {
+					whiteTurn = !whiteTurn; // Ход легален, И ТОЛЬКО В ЭТОМ СЛУЧАЕ МЕНЯЕМ СТОРОНУ
+					if (IsKingInCheck(whiteTurn ? 2 : 1)) {
+						MessageBox::Show("Шах!", "ошибка");
+					}
 				}
+
 			}
 
 
