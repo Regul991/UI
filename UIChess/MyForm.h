@@ -225,6 +225,88 @@ namespace UIChess {
 			return IsLegalRookMove(fromRow, fromCol, toRow, toCol, side) || IsLegalBishopMove(fromRow, fromCol, toRow, toCol, side); // Объединяем ладью и ферзя
 		}
 
+		bool IsLegalKingMove(int fromRow, int fromCol, int toRow, int toCol, int side) // КОРОЛЬ
+		{
+			int dr = System::Math::Abs(toRow - fromRow);
+			int dc = System::Math::Abs(toCol - fromCol);
+			if ((dr <= 1 && dc <= 1) && (dr + dc > 0)) // Не дальше одной клетки в любом направлении, суммарный сдвиг больше 0. 
+			{
+				// Целевая клетка должна быть либо пустой, либо занятой вражеской фигурой
+				int dest = map[toRow, toCol];
+				if (dest == 0 || (dest / 10) != side)
+					return true;
+			}
+			return false;
+		}
+
+		/*-----------------------------------------------
+		*  Универсальная проверка атаки врага на клетку
+		------------------------------------------------*/
+		bool IsSquareUnderAttack(int row, int col, int bySide)
+		{
+			for (int r = 0; r < 8; ++r)
+			{                                              // Двойной цикл по всем 64 клеткам полня
+				for (int c = 0; c < 8; ++c)
+				{
+					int code = map[r, c]; // Получаем коды фигур 
+					if (code == 0 || code / 10 != bySide) // Пропускаем пустые клетки и всё что не подходит нужной сторное
+						continue;
+
+					int piece = code % 10; // Получаем тип фигур
+					bool attack = false; // Изначально считаем что ниче цель не атакует (флаг атаки)
+					 
+					switch (piece)  // Позволяет выбирать между несколькими разделами кода в зависимости от значения piece
+					{
+					case 6: // пешка
+						attack = IsLegalPawnMove(r, c, row, col, bySide);
+						break; // Избегаем дальнешей проверки если кейс верный
+					case 4: // конь
+						attack = IsLegalKnightMove(r, c, row, col, bySide);
+						break;
+					case 5: // ладья
+						attack = IsLegalRookMove(r, c, row, col, bySide);
+						break;
+					case 3: // слон
+						attack = IsLegalBishopMove(r, c, row, col, bySide);
+						break;
+					case 2: // ферзь
+						attack = IsLegalQueenMove(r, c, row, col, bySide);
+						break;
+					case 1: // король
+						attack = IsLegalKingMove(r, c, row, col, bySide);
+						break;
+					}
+
+					if (attack) // Если для какой то фигуры attack = true → клетка под ударом
+						return true;
+				} 
+			}
+			return false; // Если для какой то фигуры attack = false → клетка не под ударом
+		}
+
+		bool IsKingInCheck(int side)
+		{
+			// Находим координаты своего короля
+			int kRow = -1, kCol = -1;
+			int kingCode = side * 10 + 1;
+			for (int r = 0; r < 8 && kRow < 0; ++r)
+				for (int c = 0; c < 8; ++c)
+					if (map[r, c] == kingCode)
+					{
+						kRow = r; kCol = c;
+						break;
+					}
+			if (kRow < 0) return false;  // короля нет
+
+			// Смотрим может ли его атаковать противник
+			int enemy;
+			if (side == 1)
+				enemy = 2;
+			else 
+				enemy = 1;
+			return IsSquareUnderAttack(kRow, kCol, enemy); 
+		}
+
 
 		/*------ КЛИКИ ИВЕНТЫ -------*/
 	private: System::Void OnCellClick(System::Object^ sender, System::EventArgs^ e) { // Обработчик клика по ячейке шахматной доски
@@ -277,7 +359,20 @@ namespace UIChess {
 				map[row, col] = code; // Перемещаем код фигуры в новую клетку
 				map[selectedRow, selectedCol] = 0; // Очищаем старую клетку
 				whiteTurn = !whiteTurn; // Меняем сторону 
+				if (IsKingInCheck(side)) { // Проверка шаха для своей стороны
+					map[selectedRow, selectedCol] = code;
+					map[row, col] = 0;
+					whiteTurn = !whiteTurn;
+					MessageBox::Show("Невозможный ход, шах.", "ошибка");
+				}
+				// Проверка шаха для противника
+				else if (IsKingInCheck(whiteTurn ? 2 : 1)) {
+					MessageBox::Show("Шах!", "ошибка3");
+				}
 			}
+
+
+
 			// Сбрасываем выделение
 			UpdateBoard();
 			buttons[selectedRow, selectedCol]->FlatStyle = FlatStyle::Standard;
