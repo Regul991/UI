@@ -49,6 +49,13 @@ namespace UIChess {
 		int selectedRow = -1;
 		int selectedCol = -1;
 		bool whiteTurn = true; // Флаг для очередности
+        /*----права рокировки----*/
+		bool wKingMoved = false;
+		bool bKingMoved = false;
+		bool wRookAMoved = false;   
+		bool wRookHMoved = false;   
+		bool bRookAMoved = false;   
+		bool bRookHMoved = false;
 	
 	private:
 		/// <summary>
@@ -64,7 +71,7 @@ namespace UIChess {
 		void InitMap()
 		{
 			static int initial[8][8] = {
-				{25,24,23,22,21,23,24,25}, // 1x - Черные, 2x - Белые
+				{25,24,23,22,21,23,24,25}, // 2x - Черные, 1x - Белые
 				{26,26,26,26,26,26,26,26},
 				{ 0, 0, 0, 0, 0, 0, 0, 0},
 				{ 0, 0, 0, 0, 0, 0, 0, 0},
@@ -103,6 +110,10 @@ namespace UIChess {
 					btn->Text = ""; // Пока что пустой текст
 					this->Controls->Add(btn); 
 					buttons[row, col] = btn; // Ссылка на кнопку для дальнейшей логики
+					btn->BackColor =
+						((row + col) % 2 == 0)
+						  ?Color::AntiqueWhite:   // светлая клетка
+						  Color::SandyBrown;  // тёмная клетка
 
 					int code = map[row, col]; // Получаем код фигуры из карты сверху 
 					if (code != 0) 
@@ -225,8 +236,9 @@ namespace UIChess {
 			return IsLegalRookMove(fromRow, fromCol, toRow, toCol, side) || IsLegalBishopMove(fromRow, fromCol, toRow, toCol, side); // Объединяем ладью и ферзя
 		}
 
-		bool IsLegalKingMove(int fromRow, int fromCol, int toRow, int toCol, int side) // КОРОЛЬ
+		bool IsLegalKingMove(int fromRow, int fromCol, int toRow, int toCol, int side, bool &isCastle) // КОРОЛЬ (& - ссылка, чтобы функция меняла значение передаваемой переменной)
 		{
+			isCastle = false;
 			int dr = System::Math::Abs(toRow - fromRow);
 			int dc = System::Math::Abs(toCol - fromCol);
 			if ((dr <= 1 && dc <= 1) && (dr + dc > 0)) // Не дальше одной клетки в любом направлении, суммарный сдвиг больше 0. 
@@ -236,6 +248,17 @@ namespace UIChess {
 				if (dest == 0 || (dest / 10) != side)
 					return true;
 			}
+			/* Попытка рокировки */
+			if (dr == 0 && dc == 2 && fromRow == toRow)
+			{
+				if (toCol == 6 && CanCastleKingside(side)) { 
+					isCastle = true;  
+						return true; }
+				if (toCol == 2 && CanCastleQueenside(side)) {
+					isCastle = true;
+						return true; }
+			}
+			return false;
 			return false;
 		}
 
@@ -273,7 +296,8 @@ namespace UIChess {
 						attack = IsLegalQueenMove(r, c, row, col, bySide);
 						break;
 					case 1: // король
-						attack = IsLegalKingMove(r, c, row, col, bySide);
+						bool castleFlag = false;
+						attack = IsLegalKingMove(r, c, row, col, bySide, castleFlag);
 						break;
 					}
 
@@ -284,6 +308,96 @@ namespace UIChess {
 			return false; // Если для какой то фигуры attack = false → клетка не под ударом
 		}
 
+		/*--------------------------
+		  Функция обновления флагов
+		----------------------------*/
+		void UpdateCastleFlags(int fromRow, int fromCol, int toRow, int toCol, int code, int captured)
+		{
+			int side = code / 10; // Определяем сторону
+			int piece = code % 10; // Определям тип фигуры
+
+			if (piece == 1) // Если ходил король
+			{
+				if (side == 1) wKingMoved = true; // белый ходил
+				else           bKingMoved = true; // черный ходил
+			}
+			if (piece == 5) // Если ходила ладья
+			{
+				if (side == 1 && fromRow == 7) // Для белых ладья стартовала на 7 строке
+				{
+					if (fromCol == 0) wRookAMoved = true;  // a1 - col0; h1 - col 7
+					if (fromCol == 7) wRookHMoved = true;
+				}
+				if (side == 2 && fromRow == 0) // Для черных на нулевой строке
+				{
+					if (fromCol == 0) bRookAMoved = true; // a8 
+					if (fromCol == 7) bRookHMoved = true; // h8
+				}
+			}
+			if (captured != 0 && captured % 10 == 5) // Если взяли ладью
+			{
+				int cSide = captured / 10; // Определяем сторону съеденной ладьи
+				if (cSide == 1 && toRow == 7) // Если съели белую ладью на её исходной 7 строке
+				{
+					if (toCol == 0) wRookAMoved = true; // меняем флаги
+					if (toCol == 7) wRookHMoved = true; 
+				}
+				if (cSide == 2 && toRow == 0) // Если съели чёрную ладью на её исходной 0 строке
+				{
+					if (toCol == 0) bRookAMoved = true;
+					if (toCol == 7) bRookHMoved = true;
+				}
+			}
+		}
+
+		/*-------------------------------
+		 Функция, выполняющая рокировку
+		-------------------------------*/
+		void doCastle(int side, bool kingside)
+		{
+			if (side == 1)         // белые (row 7)
+			{
+				if (kingside)      // 0-0
+				{
+					map[7, 6] = 11;   // король на g1
+					map[7, 5] = 15;   // ладья на f1
+					map[7, 4] = 0;
+					map[7, 7] = 0;
+					wKingMoved = wRookHMoved = true;
+				}
+				else               // 0-0-0
+				{
+					map[7, 2] = 11;   // король на c1
+					map[7, 3] = 15;   // ладья на d1
+					map[7, 4] = 0;
+					map[7, 0] = 0;
+					wKingMoved = wRookAMoved = true;
+				}
+			}
+			else // чёрные (row 0)
+			{
+				if (kingside)
+				{
+					map[0, 6] = 21;
+					map[0, 5] = 25;
+					map[0, 4] = 0;
+					map[0, 7] = 0;
+					bKingMoved = bRookHMoved = true;
+				}
+				else
+				{
+					map[0, 2] = 21;
+					map[0, 3] = 25;
+					map[0, 4] = 0;
+					map[0, 0] = 0;
+					bKingMoved = bRookAMoved = true;
+				}
+			}
+		}
+
+		/*--------------
+		  Проверка шаха
+		----------------*/
 		bool IsKingInCheck(int side)
 		{
 			// Находим координаты своего короля
@@ -305,6 +419,42 @@ namespace UIChess {
 			else 
 				enemy = 1;
 			return IsSquareUnderAttack(kRow, kCol, enemy); 
+		}
+
+
+		/*-------------------------
+		*  Проверка прав рокировки
+		--------------------------*/
+		bool CanCastleKingside(int side)   // 0-0
+		{
+			if (side == 1) // Белые
+				return !wKingMoved && !wRookHMoved && // Флаги должны быть false
+				map[7, 5] == 0 && map[7, 6] == 0 && // [7, 4] - e1; [7, 5] - f1; [7, 6] - g1
+				!IsSquareUnderAttack(7, 4, 2) && // Проверяем все эти клетки на атаки, передаем в функцию IsSquareUnderAttack координаты и сторону
+				!IsSquareUnderAttack(7, 5, 2) &&
+				!IsSquareUnderAttack(7, 6, 2);
+			else // Черные
+				return !bKingMoved && !bRookHMoved && 
+				map[0, 5] == 0 && map[0, 6] == 0 && // Аналогично с белыми
+				!IsSquareUnderAttack(0, 4, 1) &&
+				!IsSquareUnderAttack(0, 5, 1) &&
+				!IsSquareUnderAttack(0, 6, 1);
+		}
+
+		bool CanCastleQueenside(int side)  // 0-0-0
+		{
+			if (side == 1) // Белые
+				return !wKingMoved && !wRookAMoved && // Флаги должны быть false
+				map[7, 1] == 0 && map[7, 2] == 0 && map[7, 3] == 0 && // [7, 3] — d1; [7, 2] — c1; [7, 1] — b1
+				!IsSquareUnderAttack(7, 4, 2) && 
+				!IsSquareUnderAttack(7, 3, 2) &&
+				!IsSquareUnderAttack(7, 2, 2);
+			else // Черные
+				return !bKingMoved && !bRookAMoved &&
+				map[0, 1] == 0 && map[0, 2] == 0 && map[0, 3] == 0 &&
+				!IsSquareUnderAttack(0, 4, 1) &&
+				!IsSquareUnderAttack(0, 3, 1) &&
+				!IsSquareUnderAttack(0, 2, 1);
 		}
 
 
@@ -353,11 +503,28 @@ namespace UIChess {
 			else if (piece == 2) {                  // Если фигура ферзь, то вызываем
 				legal = IsLegalQueenMove(selectedRow, selectedCol, row, col, side);
 			}
+			else if (piece == 1) // Если фигура король, то вызываем
+			{
+				bool isCastle = false;
+				legal = IsLegalKingMove(selectedRow, selectedCol, row, col, side, isCastle);
+
+				if (legal && isCastle) // условие легальности и если ниче не двигалось
+				{
+					/* Выполнение рокировки*/
+					bool kingside = (col == 6); 
+					doCastle(side, kingside);
+					UpdateBoard();
+					whiteTurn = !whiteTurn;
+					selectedRow = selectedCol = -1;
+					return;                      
+				}
+			}
 			// Сюда добавлю остальные IsLegalPieceTypeMove
 
 			if (legal && ((map[row, col] == 0) || (map[row, col] / 10) != side)) {
 				int captured = map[row, col]; // СОХРАНЯЕМ ЖЕРТВУ
 				map[row, col] = code; // Перемещаем код фигуры в новую клетку
+				UpdateCastleFlags(selectedRow, selectedCol, row, col, code, captured);
 				map[selectedRow, selectedCol] = 0; // Очищаем старую клетку
 
 				if (IsKingInCheck(side)) { // Проверка шаха для своей стороны
