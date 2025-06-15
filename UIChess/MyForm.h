@@ -17,6 +17,7 @@ namespace UIChess {
 	public:
 		MyForm(void)
 		{
+			CreateTurnLabel();
 			InitializeComponent();
 			InitMap();
 			chessSprites = gcnew Bitmap(
@@ -90,6 +91,9 @@ namespace UIChess {
 
 
 	public: bool isMoving = false;
+
+	private: Label^ turnLabel; // для надписи
+
 	/*-------------------------------------------
 		 Создаем массив-доску из 64 кнопок
 	-------------------------------------------*/
@@ -308,6 +312,21 @@ namespace UIChess {
 			return false; // Если для какой то фигуры attack = false → клетка не под ударом
 		}
 
+		void UpdateTurnLabel()                    
+		{
+			turnLabel->Text = whiteTurn ? "Ход белых" : "Ход черных";
+		}
+
+		void MyForm::CreateTurnLabel()
+		{
+			turnLabel = gcnew Label();
+			turnLabel->AutoSize = true;
+			turnLabel->Font = gcnew Drawing::Font("Calibri light", 12);
+			turnLabel->Location = Drawing::Point(450, 10);
+			this->Controls->Add(turnLabel);
+			UpdateTurnLabel();
+		}
+
 		/*--------------------------
 		  Функция обновления флагов
 		----------------------------*/
@@ -510,11 +529,12 @@ namespace UIChess {
 
 				if (legal && isCastle) // условие легальности и если ниче не двигалось
 				{
-					/* Выполнение рокировки*/
+					/* Выполнение рокировки*/					 
 					bool kingside = (col == 6); 
 					doCastle(side, kingside);
 					UpdateBoard();
 					whiteTurn = !whiteTurn;
+					UpdateTurnLabel();
 					selectedRow = selectedCol = -1;
 					return;                      
 				}
@@ -534,6 +554,7 @@ namespace UIChess {
 				}
 				else {
 					whiteTurn = !whiteTurn; // Ход легален, И ТОЛЬКО В ЭТОМ СЛУЧАЕ МЕНЯЕМ СТОРОНУ
+					UpdateTurnLabel();
 					if (IsKingInCheck(whiteTurn ? 2 : 1)) {
 						MessageBox::Show("Шах!", "ошибка");
 					}
@@ -601,7 +622,7 @@ namespace UIChess {
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
-			this->ClientSize = System::Drawing::Size(411, 401);
+			this->ClientSize = System::Drawing::Size(550, 401);
 			this->Name = L"MyForm";
 			this->Text = L"MyForm";
 			this->ResumeLayout(false);
